@@ -1,81 +1,39 @@
-import { _ } from 'streamline-runtime';
 import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';
 import { iconsList } from './iconsList';
+import { PNG2ICNS, PNG2ICO_BMP, HERMITE } from 'png2icons';
 
-export function createAndroidIcons(_: _, source: string, output: string): void {
+export function createIcons(_: Streamline._, type: string, source: string, output: string): void {
 	try {
-		mkdirp(_, `${output}/file`);
-		iconsList.android.forEach(icon => {
-			sharp(source)
-				.resize(icon.width, icon.height)
-				.toFile(`${output}/${icon.name}`);
-		});
+		mkdirp(_, `${output}/icon`);
+		iconsList[type].forEach(icon => 
+			sharp(source).resize(icon.width, icon.height).toBuffer((err, buffer) => {
+				if (err) { return logError(type, err); }
+				if (/\.ic(o|ns)$/.test(icon.name)) {
+					buffer = (/\.ico$/.test(icon.name) ? PNG2ICO_BMP : PNG2ICNS)(buffer, HERMITE, false, 0);
+				}
+				fs.writeFile(`${output}/${icon.name}`, buffer, error => {
+					if (error) { return logError(type, error); }
+				});
+			})
+		);
 	} catch (e) {
-		console.log('Error creating android icons.'.red);
-		console.log(`${e}`.red);
+		logError(type, e);
 	}
 }
 
-export function createIosIcons(_: _, source: string, output: string): void {
-	try {
-		mkdirp(_, `${output}/file`);
-		iconsList.ios.forEach(icon => {
-			sharp(source)
-				.resize(icon.width, icon.height)
-				.toFile(`${output}/${icon.name}`);
-		});
-	} catch (e) {
-		console.log('Error creating ios icons.'.red);
-		console.log(`${e}`.red);
-	}
+function logError(type: string, error: any): void {
+	console.log(`Error creating ${type} icons.`.red);
+	console.log(`${JSON.stringify(error)}`.red);
 }
 
-export function createWebIcons(_: _, source: string, output: string): void {
-	try {
-		mkdirp(_, `${output}/file`);
-		iconsList.web.forEach(icon => {
-			sharp(source)
-				.resize(icon.width, icon.height)
-				.toFile(`${output}/${icon.name}`);
-		});
-	} catch (e) {
-		console.log('Error creating web icons.'.red);
-		console.log(`${e}`.red);
-	}
-}
-
-export function createWindowsIcons(_: _, source: string, output: string): void {
-	try {
-		mkdirp(_, `${output}/file`);
-		iconsList.windows.forEach(icon => {
-			sharp(source)
-				.resize(icon.width, icon.height)
-				.toFile(`${output}/${icon.name}`);
-		});
-	} catch (e) {
-		console.log('Error creating windows icons.'.red);
-		console.log(`${e}`.red);
-	}
-}
-
-export function isInArray (array: Array<any>, platform: string): any {
-	let i: any;
-	for (i = 0; i < array.length; i++) {
-		if (array[i].match(platform)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-function mkdirp(_: _, filepath: string): void {
+function mkdirp(_: Streamline._, filepath: string): void {
 	const dirname: string = path.dirname(filepath);
 	try {
 		fs.access(dirname, _);
 	} catch (e) {
 		mkdirp(_, dirname);
-		fs.mkdir(dirname, _);
+		fs.mkdir(dirname, _)
 	}
 }

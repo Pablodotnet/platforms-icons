@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { _ } from 'streamline-runtime';
 import { help, alias, options, argv, Arguments } from 'yargs';
-import { createAndroidIcons, createIosIcons, createWebIcons, createWindowsIcons, isInArray } from './helpers';
+import { createIcons } from './helpers';
 
 interface IArgs extends Arguments {
 	androidSrc?: string;
@@ -29,7 +29,7 @@ options({
 		alias: 'androidOutput',
 		nargs: 1,
 		describe: 'Output path where android icons will be saved',
-		default: './res/android/icons/',
+		default: './assets/android/icons/',
 		normalize: true
 	},
 	is: {
@@ -43,7 +43,7 @@ options({
 		alias: 'iosOutput',
 		nargs: 1,
 		describe: 'Output path where ios icons will be saved',
-		default: './res/ios/icons/',
+		default: './assets/ios/icons/',
 		normalize: true
 	},
 	websrc: {
@@ -57,7 +57,7 @@ options({
 		alias: 'webOutput',
 		nargs: 1,
 		describe: 'Output path where web icons will be saved',
-		default: './res/web/icons/',
+		default: './assets/web/icons/',
 		normalize: true
 	},
 	winsrc: {
@@ -71,46 +71,23 @@ options({
 		alias: 'windowsOutput',
 		nargs: 1,
 		describe: 'Output path where windows icons will be saved',
-		default: './res/windows/icons/',
+		default: './assets/windows/icons/',
 		normalize: true
 	},
 	p: {
 		alias: 'platform',
 		describe: 'The platform for which the icons are created',
-		choices: ['android', 'ios', 'web', 'windows', 'all'],
-		default: 'all',
+		choices: ['android', 'ios', 'web', 'windows'],
+		default: ['android', 'ios', 'web', 'windows'],
 		array: true
 	}
 });
 
 _.run(__ => init(__, argv));
 
-function init(_: _, args: IArgs): void {
-	if (isInArray(args.platform, 'all')) {
-		console.log('Creating icons for all platforms'.yellow);
-		createAndroidIcons(_, args.androidSrc, args.androidOutput);
-		createIosIcons(_, args.iosSrc, args.iosOutput);
-		createWebIcons(_, args.webSrc, args.webOutput);
-		createWindowsIcons(_, args.windowsSrc, args.windowsOutput);
-	}
-
-	if (isInArray(args.platform, 'android')) {
-		console.log('Creating Android Icons'.yellow);
-		createAndroidIcons(_, args.androidSrc, args.androidOutput);
-	}
-
-	if (isInArray(args.platform, 'ios')) {
-		console.log('Creating iOS Icons'.yellow);
-		createIosIcons(_, args.iosSrc, args.iosOutput);
-	}
-
-	if (isInArray(args.platform, 'web')) {
-		console.log('Creating Web Icons'.yellow);
-		createWebIcons(_, args.webSrc, args.webOutput);
-	}
-
-	if (isInArray(args.platform, 'windows')) {
-		console.log('Creating Windows Icons'.yellow);
-		createWindowsIcons(_, args.windowsSrc, args.windowsOutput);
-	}
+function init(__: _, args: IArgs): void {
+	args.platform.forEach_(__, (___, platform) => {
+		console.log(`Creating ${platform} Icons`.yellow);
+		return createIcons(___, platform, args[`${platform}Src`], args[`${platform}Output`]);
+	});
 }

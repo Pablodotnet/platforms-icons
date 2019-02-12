@@ -1,4 +1,5 @@
 /node_modules
-/res
+/assets
 icon-ios.png
 icon-android.png
+.DS_STORE
